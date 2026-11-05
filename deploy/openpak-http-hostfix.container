@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenPak port-80 front: drops repeated Host headers (Wii NAS login), relays to Traefik with PROXY v2
+Wants=openpak-traefik.service
+After=openpak-traefik.service
+
+[Container]
+ContainerName=openpak-http-hostfix
+# Pinned: deploy by changing the tag (no unscoped auto-update in front of all port-80 traffic).
+Image=ghcr.io/openpak/http-hostfix:0.1.0
+# pasta keeps the visitor's address (like openpak-edge); -T 31081 reaches Traefik's web
+# entrypoint on the host's loopback, which trusts PROXY v2 from there.
+Network=pasta:-T,31081
+PublishPort=0.0.0.0:21090:21090
+Environment=HOSTFIX_LISTEN=:21090
+Environment=HOSTFIX_UPSTREAM=127.0.0.1:31081
+Environment=HOSTFIX_PROXY_PROTOCOL=v2
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

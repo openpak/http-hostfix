@@ -1,0 +1,19 @@
+name: test
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: go test -race -count=1 ./...
+        env:
+          GOWORK: 'off'
+      - run: go vet ./...
+        env:
+          GOWORK: 'off'
+      - run: test -z "$(gofmt -l .)"
