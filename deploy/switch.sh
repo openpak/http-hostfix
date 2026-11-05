@@ -16,6 +16,16 @@ if [ "$to" = 21090 ] && ! systemctl --user is-active --quiet openpak-http-hostfi
 	echo "http-hostfix is not running" >&2
 	exit 1
 fi
+# The redirect changes the destination port before the INPUT chain, which ends in a REJECT:
+# the target port must be accepted there (live and saved) before traffic is sent to it.
+if ! sudo -n iptables -C INPUT -p tcp -m tcp --dport "$to" -j ACCEPT 2>/dev/null; then
+	pos=$(sudo -n iptables -L INPUT --line-numbers -n | awk -v p="dpt:$from" '$0 ~ p && /ACCEPT/ {print $1; exit}')
+	sudo -n iptables -I INPUT "${pos:-1}" -p tcp -m tcp --dport "$to" -j ACCEPT
+	echo "INPUT now accepts $to"
+fi
+if ! sudo -n grep -q -- "-A INPUT -p tcp -m tcp --dport $to -j ACCEPT" /etc/iptables/rules.v4; then
+	sudo -n sed -i "/^-A INPUT -p tcp -m tcp --dport $from -j ACCEPT\$/a -A INPUT -p tcp -m tcp --dport $to -j ACCEPT" /etc/iptables/rules.v4
+fi
 rules=$(sudo -n iptables -t nat -S PREROUTING | grep -- "--dport 80 -j REDIRECT --to-ports $from" || true)
 if [ -z "$rules" ]; then
 	echo "no port-80 -> $from rule: already switched $1"

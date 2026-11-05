@@ -23,7 +23,9 @@ the host's `127.0.0.1:31081` arrives from, so no Traefik change is needed.
 
 ## Cutover and rollback
 
-`deploy/switch.sh` takes `~/openpak-deploy.lock`, moves every port-80 rule in one
+`deploy/switch.sh` takes `~/openpak-deploy.lock`, makes sure the INPUT chain accepts the
+target port (the chain ends in a REJECT; without this the redirected traffic is refused), moves
+every port-80 rule in one
 `iptables-restore` commit and makes the same one-line edit in `/etc/iptables/rules.v4` (a
 backup is taken first).
 
