@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	maxHead     = 64 << 10        // bytes of request or response head before we stop parsing
-	headTimeout = 2 * time.Minute // idle time allowed before the next request head
+	maxHead     = 64 << 10         // bytes of request or response head before we stop parsing
+	headTimeout = 10 * time.Minute // idle time allowed before the next request head (must exceed the status checker probe interval, 2 min)
 )
 
 // reqInfo is what the response side needs about the request it answers.
